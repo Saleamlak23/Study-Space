@@ -1,0 +1,10 @@
+{
+  "name": "StudyLens",
+  "short_name": "StudyLens",
+  "description": "A local-first browser study workspace.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#f8fafc",
+  "icons": []
+}
