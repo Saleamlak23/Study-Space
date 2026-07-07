@@ -5,16 +5,3 @@ export interface LoadedNote {
   body: string;
   file?: File;
 }
-
-export interface NoteFile {
-  name: string;
-  handle: FileSystemFileHandle;
-  lastModified?: number;
-  size?: number;
-}
-
-export interface TocItem {
-  id: string;
-  text: string;
-  level: number;
-}

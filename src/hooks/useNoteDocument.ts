@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SaveState } from '../types/notes';
-import { writeTextFile } from '../services/fileSystemAccess';
+import { getExistingNoteHandle, getOrCreateNoteHandle, writeTextFile } from '../services/fileSystemAccess';
 import { buildNoteDocument, defaultNoteBody, readNoteFile } from '../services/noteHtml';
-import { getNoteHandle } from '../services/noteFiles';
 import { sanitizeHtml } from '../services/sanitization';
 import { getErrorMessage } from '../utils/errors';
-import { DEFAULT_NOTE_FILE } from '../utils/fileNames';
 
-export function useNoteDocument(directoryHandle: FileSystemDirectoryHandle | null, noteFileName = DEFAULT_NOTE_FILE) {
+export function useNoteDocument(directoryHandle: FileSystemDirectoryHandle | null) {
   const [content, setContent] = useState(defaultNoteBody());
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -36,13 +34,19 @@ export function useNoteDocument(directoryHandle: FileSystemDirectoryHandle | nul
       }
 
       try {
-        const handle = await getNoteHandle(directoryHandle, noteFileName, true);
-        noteHandleRef.current = handle;
-        const loaded = await readNoteFile(handle);
-        if (!cancelled) {
-          setContent(loaded.body);
-          setLoadedAt(loaded.file?.lastModified || Date.now());
-          setSaveState('saved');
+        const existing = await getExistingNoteHandle(directoryHandle);
+        noteHandleRef.current = existing;
+        if (existing) {
+          const loaded = await readNoteFile(existing);
+          if (!cancelled) {
+            setContent(loaded.body);
+            setLoadedAt(loaded.file?.lastModified || Date.now());
+            setSaveState('saved');
+          }
+        } else if (!cancelled) {
+          setContent(defaultNoteBody());
+          setLoadedAt(null);
+          setSaveState('idle');
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -59,7 +63,7 @@ export function useNoteDocument(directoryHandle: FileSystemDirectoryHandle | nul
     return () => {
       cancelled = true;
     };
-  }, [directoryHandle, noteFileName]);
+  }, [directoryHandle]);
 
   const updateContent = useCallback((nextContent: string) => {
     setContent(sanitizeHtml(nextContent));
@@ -78,7 +82,7 @@ export function useNoteDocument(directoryHandle: FileSystemDirectoryHandle | nul
     setError(null);
 
     try {
-      const handle = noteHandleRef.current || await getNoteHandle(directoryHandle, noteFileName, true);
+      const handle = noteHandleRef.current || await getOrCreateNoteHandle(directoryHandle);
       noteHandleRef.current = handle;
       const loadedTimestamp = loadedAt;
       let latestFile: File | null = null;
@@ -86,7 +90,7 @@ export function useNoteDocument(directoryHandle: FileSystemDirectoryHandle | nul
         latestFile = await handle.getFile().catch(() => null);
       }
       if (latestFile && loadedTimestamp !== null && latestFile.lastModified > loadedTimestamp + 1000) {
-        throw new Error(`${noteFileName} changed outside StudyLens. Reload the workspace before saving to avoid overwriting newer changes.`);
+        throw new Error('note.html changed outside StudyLens. Reload the workspace before saving to avoid overwriting newer changes.');
       }
       await writeTextFile(handle, buildNoteDocument(latestContentRef.current));
       const file = await handle.getFile();
@@ -102,7 +106,7 @@ export function useNoteDocument(directoryHandle: FileSystemDirectoryHandle | nul
         setSaveState('dirty');
       }
     }
-  }, [directoryHandle, loadedAt, noteFileName, saveState]);
+  }, [directoryHandle, loadedAt, saveState]);
 
   return { content, updateContent, saveNow, saveState, error };
 }

@@ -1,16 +1,14 @@
 import type { Editor } from '@tiptap/react';
-import { Bold, Code, Heading1, Heading2, Italic, Link, List, ListOrdered, MousePointer2, PenLine, Quote, Redo2, Save, Strikethrough, Underline, Undo2 } from 'lucide-react';
+import { Bold, Code, Heading1, Heading2, Italic, Link, List, ListOrdered, Quote, Redo2, Save, Strikethrough, Underline, Undo2 } from 'lucide-react';
 import { Button } from '../common/Button';
 import { Tooltip } from '../common/Tooltip';
 
 interface EditorToolbarProps {
   editor: Editor | null;
   onSave: () => void;
-  onClipSelection: () => void;
-  onOpenWhiteboard: () => void;
 }
 
-export function EditorToolbar({ editor, onSave, onClipSelection, onOpenWhiteboard }: EditorToolbarProps) {
+export function EditorToolbar({ editor, onSave }: EditorToolbarProps) {
   if (!editor) return null;
 
   const controls = [
@@ -61,8 +59,6 @@ export function EditorToolbar({ editor, onSave, onClipSelection, onOpenWhiteboar
         <Button variant="ghost" onClick={setLink} icon={<Link size={16} />} aria-label="Link" className={editor.isActive('link') ? 'bg-slate-200' : ''} />
       </Tooltip>
       <span className="mx-1 h-6 w-px bg-slate-200" />
-      <Button onClick={onClipSelection} icon={<MousePointer2 size={16} />}>Clip</Button>
-      <Button onClick={onOpenWhiteboard} icon={<PenLine size={16} />}>Draw</Button>
       <Button onClick={onSave} icon={<Save size={16} />}>Save</Button>
     </div>
   );
