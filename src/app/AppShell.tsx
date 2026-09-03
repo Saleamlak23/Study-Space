@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Clock, FolderOpen, Trash2, Upload } from 'lucide-react';
 import { Button } from '../components/common/Button';
 import { Spinner } from '../components/common/Spinner';
@@ -22,6 +22,7 @@ import type { StudyFileNode } from '../types/files';
 import type { RecentFolder } from '../types/workspace';
 
 export function AppShell() {
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('studylens-theme') === 'dark');
   const { recentFolders, isLoading: recentLoading, remember, forget } = useRecentFolders();
   const { tree, isScanning, scanError, scan } = useFileTree();
   const { workspace, accessError, pickFolder, openRecent } = useDirectoryAccess(scan, remember);
@@ -55,6 +56,11 @@ export function AppShell() {
   const sidebarTitle = workspace?.name || (canUseFolderPicker ? 'No folder open' : 'Drop files to preview');
 
   const recentList = useMemo(() => recentFolders.slice(0, 8), [recentFolders]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDarkMode);
+    localStorage.setItem('studylens-theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
 
   const handleClipToNote = useCallback(
     (text: string, sourceName?: string) => {
@@ -192,6 +198,8 @@ export function AppShell() {
           onPickFolder={pickFolder}
           onRefresh={() => void refreshWorkspace()}
           isRefreshing={isScanning}
+          isDarkMode={isDarkMode}
+          onToggleTheme={() => setIsDarkMode((current) => !current)}
         />
         {mainContent}
       </main>
