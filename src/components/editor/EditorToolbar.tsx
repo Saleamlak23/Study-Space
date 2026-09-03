@@ -1,14 +1,33 @@
 import type { Editor } from '@tiptap/react';
-import { Bold, Code, Heading1, Heading2, Italic, Link, List, ListOrdered, Quote, Redo2, Save, Strikethrough, Underline, Undo2 } from 'lucide-react';
+import {
+  Bold,
+  Code,
+  Heading1,
+  Heading2,
+  Italic,
+  Link,
+  List,
+  ListOrdered,
+  PenLine,
+  Quote,
+  Redo2,
+  Save,
+  Strikethrough,
+  Underline,
+  Undo2,
+  ListTree,
+} from 'lucide-react';
 import { Button } from '../common/Button';
 import { Tooltip } from '../common/Tooltip';
 
 interface EditorToolbarProps {
   editor: Editor | null;
   onSave: () => void;
+  onToggleToc?: () => void;
+  showToc?: boolean;
 }
 
-export function EditorToolbar({ editor, onSave }: EditorToolbarProps) {
+export function EditorToolbar({ editor, onSave, onToggleToc, showToc }: EditorToolbarProps) {
   if (!editor) return null;
 
   const controls = [
@@ -58,6 +77,25 @@ export function EditorToolbar({ editor, onSave }: EditorToolbarProps) {
       <Tooltip label="Link">
         <Button variant="ghost" onClick={setLink} icon={<Link size={16} />} aria-label="Link" className={editor.isActive('link') ? 'bg-slate-200' : ''} />
       </Tooltip>
+      <Tooltip label="Insert whiteboard">
+        <Button
+          variant="ghost"
+          onClick={() => editor.chain().focus().insertExcalidraw().run()}
+          icon={<PenLine size={16} />}
+          aria-label="Insert whiteboard"
+        />
+      </Tooltip>
+      {onToggleToc && (
+        <Tooltip label={showToc ? 'Hide table of contents' : 'Show table of contents'}>
+          <Button
+            variant="ghost"
+            onClick={onToggleToc}
+            icon={<ListTree size={16} />}
+            aria-label="Toggle table of contents"
+            className={showToc ? 'bg-slate-200' : ''}
+          />
+        </Tooltip>
+      )}
       <span className="mx-1 h-6 w-px bg-slate-200" />
       <Button onClick={onSave} icon={<Save size={16} />}>Save</Button>
     </div>

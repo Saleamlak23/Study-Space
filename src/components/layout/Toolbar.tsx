@@ -11,9 +11,9 @@ interface ToolbarProps {
 export function Toolbar({ workspaceName, onPickFolder, onRefresh, isRefreshing }: ToolbarProps) {
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4">
-      <div>
+      <div className="flex items-center gap-2">
+        <img src="/src/assets/logo.svg" alt="Logo" className="h-6 w-6" />
         <h1 className="text-base font-semibold text-slate-950">StudyLens</h1>
-        <p className="text-xs text-slate-500">{workspaceName || 'Local-first study workspace'}</p>
       </div>
       <div className="flex items-center gap-2">
         {workspaceName && (

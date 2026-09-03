@@ -11,11 +11,12 @@
   },
   "dependencies": {
     "@excalidraw/excalidraw": "^0.17.6",
+    "@tailwindcss/typography": "^0.5.15",
+    "@tiptap/extension-image": "^2.27.2",
     "@tiptap/extension-link": "^2.11.5",
     "@tiptap/extension-placeholder": "^2.11.5",
     "@tiptap/extension-underline": "^2.11.5",
     "@tiptap/pm": "^2.11.5",
-    "@tailwindcss/typography": "^0.5.15",
     "@tiptap/react": "^2.11.5",
     "@tiptap/starter-kit": "^2.11.5",
     "dompurify": "^3.2.4",

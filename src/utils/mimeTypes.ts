@@ -1,4 +1,5 @@
 import type { FileCategory } from '../types/files';
+import { isNoteFileName } from './fileNames';
 
 const imageExtensions = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'bmp', 'svg']);
 const textExtensions = new Set(['txt', 'md', 'markdown', 'csv', 'json', 'ts', 'tsx', 'js', 'jsx', 'css', 'html', 'xml', 'yml', 'yaml', 'log']);
@@ -12,7 +13,7 @@ export function extensionFromName(name: string) {
 
 export function categoryFromName(name: string): FileCategory {
   const extension = extensionFromName(name);
-  if (name.toLowerCase() === 'note.html') return 'note';
+  if (isNoteFileName(name)) return 'note';
   if (imageExtensions.has(extension)) return 'image';
   if (textExtensions.has(extension)) return 'text';
   if (documentExtensions.has(extension)) return 'document';

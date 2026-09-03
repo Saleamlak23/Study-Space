@@ -11,14 +11,24 @@ interface FilePreviewProps {
   preview: PreviewData | null;
   isLoading: boolean;
   error: string | null;
+  onClipToNote?: (text: string, sourceName?: string) => void;
 }
 
-export function FilePreview({ node, preview, isLoading, error }: FilePreviewProps) {
+export function FilePreview({ node, preview, isLoading, error, onClipToNote }: FilePreviewProps) {
   if (!node) {
     return (
       <EmptyState
         title="Select a study file"
         description="Choose a PDF, image, text file, audio file, or video from the folder tree to preview it in this pane."
+      />
+    );
+  }
+
+  if (node.category === 'note') {
+    return (
+      <EmptyState
+        title="Note open in editor"
+        description={`${node.name} is open in the note panel. Edit it there, or pick another file to preview.`}
       />
     );
   }
@@ -61,7 +71,15 @@ export function FilePreview({ node, preview, isLoading, error }: FilePreviewProp
       </div>
     );
   }
-  if (preview.kind === 'text') return <TextPreview text={preview.text || ''} />;
+  if (preview.kind === 'text') {
+    return (
+      <TextPreview
+        text={preview.text || ''}
+        sourceName={node.name}
+        onClipToNote={onClipToNote}
+      />
+    );
+  }
 
   return <UnsupportedPreview node={node} />;
 }

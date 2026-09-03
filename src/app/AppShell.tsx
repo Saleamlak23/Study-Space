@@ -12,10 +12,12 @@ import { NoteEditor } from '../components/editor/NoteEditor';
 import { useDirectoryAccess } from '../hooks/useDirectoryAccess';
 import { useFilePreview } from '../hooks/useFilePreview';
 import { useFileTree } from '../hooks/useFileTree';
-import { useNoteDocument } from '../hooks/useNoteDocument';
+import { useNotesManager } from '../hooks/useNotesManager';
 import { useRecentFolders } from '../hooks/useRecentFolders';
 import { useDebouncedSave } from '../hooks/useDebouncedSave';
 import { supportsDirectoryPicker } from '../services/permissions';
+import { DEFAULT_NOTE_FILE } from '../utils/fileNames';
+import { buildClipHtml } from '../utils/clipToNote';
 import type { StudyFileNode } from '../types/files';
 import type { RecentFolder } from '../types/workspace';
 
@@ -24,33 +26,67 @@ export function AppShell() {
   const { tree, isScanning, scanError, scan } = useFileTree();
   const { workspace, accessError, pickFolder, openRecent } = useDirectoryAccess(scan, remember);
   const [selectedNode, setSelectedNode] = useState<StudyFileNode | null>(null);
+  const [activeNotePath, setActiveNotePath] = useState<string | null>(DEFAULT_NOTE_FILE);
   const [droppedFiles, setDroppedFiles] = useState<StudyFileNode[]>([]);
   const directoryHandle = workspace?.directoryHandle || null;
-  const note = useNoteDocument(directoryHandle);
-  const preview = useFilePreview(selectedNode);
-  const canUseFolderPicker = supportsDirectoryPicker();
-
-  useDebouncedSave(() => {
-    if (note.saveState === 'dirty') void note.saveNow();
-  }, 900, [note.saveState, note.content]);
-
-  const currentTree = canUseFolderPicker ? tree : droppedFiles;
-  const selectedPath = selectedNode?.path;
-  const sidebarTitle = workspace?.name || (canUseFolderPicker ? 'No folder open' : 'Drop files to preview');
 
   const refreshWorkspace = useCallback(async () => {
     if (!workspace) return;
     await scan(workspace.directoryHandle);
   }, [scan, workspace]);
 
+  const notes = useNotesManager({
+    directoryHandle,
+    tree,
+    activeNotePath,
+    onActiveNotePathChange: setActiveNotePath,
+    onTreeRefresh: () => void refreshWorkspace(),
+  });
+
+  const preview = useFilePreview(selectedNode);
+  const canUseFolderPicker = supportsDirectoryPicker();
+
+  useDebouncedSave(() => {
+    if (notes.saveState === 'dirty') void notes.saveNow();
+  }, 900, [notes.saveState, notes.content]);
+
+  const currentTree = canUseFolderPicker ? tree : droppedFiles;
+  const selectedPath = selectedNode?.path;
+  const sidebarTitle = workspace?.name || (canUseFolderPicker ? 'No folder open' : 'Drop files to preview');
+
   const recentList = useMemo(() => recentFolders.slice(0, 8), [recentFolders]);
+
+  const handleClipToNote = useCallback(
+    (text: string, sourceName?: string) => {
+      notes.insertHtml(buildClipHtml(text, sourceName));
+    },
+    [notes],
+  );
+
+  const handleFileSelect = useCallback((node: StudyFileNode) => {
+    setSelectedNode(node);
+    if (node.category === 'note') {
+      setActiveNotePath(node.path);
+    }
+  }, []);
 
   async function handleOpenRecent(folder: RecentFolder) {
     try {
       await openRecent(folder);
       setSelectedNode(null);
+      setActiveNotePath(DEFAULT_NOTE_FILE);
     } catch {
       return;
+    }
+  }
+
+  async function handleCreateNote() {
+    const title = window.prompt('Note title', 'New Study Note');
+    if (!title?.trim()) return;
+    try {
+      await notes.createNote(title.trim());
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : 'Could not create note.');
     }
   }
 
@@ -97,21 +133,33 @@ export function AppShell() {
 
   const mainContent = workspace ? (
     <SplitPane
-      left={<FilePreview node={selectedNode} preview={preview.preview} isLoading={preview.isLoading} error={preview.error} />}
+      left={
+        <FilePreview
+          node={selectedNode}
+          preview={preview.preview}
+          isLoading={preview.isLoading}
+          error={preview.error}
+          onClipToNote={handleClipToNote}
+        />
+      }
       right={
         <NoteEditor
-          content={note.content}
-          saveState={note.saveState}
-          error={note.error}
-          onChange={note.updateContent}
-          onSave={() => void note.saveNow()}
+          content={notes.content}
+          saveState={notes.saveState}
+          error={notes.error}
+          notes={notes.notes}
+          activeNotePath={notes.activeNotePath}
+          onChange={notes.updateContent}
+          onSave={() => void notes.saveNow()}
+          onSelectNote={setActiveNotePath}
+          onCreateNote={() => void handleCreateNote()}
         />
       }
     />
   ) : canUseFolderPicker ? (
     <EmptyState
       title="Turn a folder into a study workspace"
-      description="Open a local folder to browse readings, preview files inline, and write a self-contained note.html beside your study materials."
+      description="Open a local folder to browse readings, preview files inline, and write self-contained note files beside your study materials."
       action={<Button variant="primary" icon={<FolderOpen size={16} />} onClick={pickFolder}>Open folder</Button>}
     />
   ) : (
@@ -133,7 +181,7 @@ export function AppShell() {
           {(accessError || scanError) && <p className="mt-2 text-sm text-red-700">{accessError || scanError}</p>}
         </div>
         {currentTree.length || workspace || !canUseFolderPicker ? (
-          <FileTree tree={currentTree} selectedPath={selectedPath} isScanning={isScanning} onSelect={setSelectedNode} />
+          <FileTree tree={currentTree} selectedPath={selectedPath} isScanning={isScanning} onSelect={handleFileSelect} />
         ) : (
           <RecentFoldersList folders={recentList} loading={recentLoading} onOpen={handleOpenRecent} onForget={forget} />
         )}
