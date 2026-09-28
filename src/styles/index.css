@@ -32,6 +32,18 @@ body {
   background-color: #172033;
 }
 
+.dark .bg-paper {
+  background-color: #111827;
+}
+
+.dark .bg-slate-200 {
+  background-color: #374151;
+}
+
+.dark .text-ink {
+  color: #e5e7eb;
+}
+
 .dark .border-slate-200,
 .dark .border-slate-300 {
   border-color: #374151;
@@ -50,7 +62,7 @@ body {
   color: #9ca3af;
 }
 
-.dark .hover\\:bg-slate-100:hover {
+.dark .hover\:bg-slate-100:hover {
   background-color: #374151;
 }
 

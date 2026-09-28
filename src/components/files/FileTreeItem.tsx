@@ -21,7 +21,9 @@ export function FileTreeItem({ node, selectedPath, expanded, onToggle, onSelect 
         type="button"
         onClick={() => isDirectory ? onToggle(node.path) : onSelect(node)}
         className={`flex h-8 w-full items-center gap-2 rounded px-2 text-left text-sm transition ${
-          isSelected ? 'bg-blue-50 text-blue-800' : 'text-slate-700 hover:bg-slate-100'
+          isSelected
+            ? 'bg-blue-50 text-blue-800 dark:bg-blue-900 dark:text-blue-100'
+            : 'text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
         }`}
         style={{ paddingLeft: `${8 + node.depth * 16}px` }}
       >
